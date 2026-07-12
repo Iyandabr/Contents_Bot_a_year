@@ -1,9 +1,11 @@
 /**
- * Scans HTML content for all <a href> links.
- * Internal links are verified — broken ones are replaced with the closest
- * matching real post found via the WP search API.
- * If no match is found, the link is stripped (text kept, anchor removed).
- * External links are logged as warnings but left untouched.
+ * Scans HTML content for all <a href> links and validates them.
+ *
+ * Internal broken links → search own site for a relevant post and replace.
+ * External broken links → search own site for a relevant post and replace
+ *                         (taking ownership). If no match found, strip the
+ *                         anchor entirely and keep the visible text.
+ * Working links (internal or external) → left as-is.
  */
 async function validateAndFixLinks(htmlContent, site) {
   const base        = site.url.replace(/\/$/, "");
@@ -19,8 +21,8 @@ async function validateAndFixLinks(htmlContent, site) {
     const hrefMatch = /href=["']([^"']+)["']/i.exec(attrsStr);
     if (!hrefMatch) continue;
 
-    const href     = hrefMatch[1];
-    const fullHref = href.startsWith("http") ? href : `${base}${href.startsWith("/") ? "" : "/"}${href}`;
+    const href      = hrefMatch[1];
+    const fullHref  = href.startsWith("http") ? href : `${base}${href.startsWith("/") ? "" : "/"}${href}`;
     const isInternal = fullHref.startsWith(base);
 
     found.push({ full: match[0], href: fullHref, text: match[2], innerText, isInternal });
@@ -33,9 +35,9 @@ async function validateAndFixLinks(htmlContent, site) {
     found.map(async (link) => {
       try {
         const res = await fetch(link.href, {
-          method:  "HEAD",
-          headers: { "User-Agent": "Mozilla/5.0 (compatible; ContentBot/1.0)" },
-          signal:  AbortSignal.timeout(8000),
+          method:   "HEAD",
+          headers:  { "User-Agent": "Mozilla/5.0 (compatible; ContentBot/1.0)" },
+          signal:   AbortSignal.timeout(8000),
           redirect: "follow",
         });
         return { ...link, status: res.status, ok: res.status < 400 };
@@ -53,24 +55,20 @@ async function validateAndFixLinks(htmlContent, site) {
       continue;
     }
 
-    if (!link.isInternal) {
-      console.warn(`[LinkCheck] ⚠️  External may be broken (${link.status}): ${link.href}`);
-      continue;
-    }
+    // Broken — whether internal or external, try to replace with an own-site post
+    const type = link.isInternal ? "internal" : "external";
+    console.log(`[LinkCheck] ❌ Broken ${type} link (${link.status}): ${link.href} — finding replacement...`);
 
-    // Broken internal link — try to find a real replacement post
-    console.log(`[LinkCheck] ❌ Broken internal link: ${link.href} — searching for replacement...`);
     const replacement = await findReplacementPost(link.innerText, base, credentials);
 
     if (replacement) {
-      // Swap the broken href with the real post URL
       const fixed = link.full.replace(link.href, replacement.url);
       cleaned = cleaned.replace(link.full, fixed);
-      console.log(`[LinkCheck] 🔁 Replaced with: ${replacement.url} ("${replacement.title}")`);
+      console.log(`[LinkCheck] 🔁 Replaced with own post: ${replacement.url} ("${replacement.title}")`);
     } else {
-      // No match found — strip the anchor, keep visible text
+      // Nothing relevant found — strip the anchor, keep visible text
       cleaned = cleaned.replace(link.full, link.text);
-      console.log(`[LinkCheck] 🗑️  Stripped (no replacement found): ${link.href}`);
+      console.log(`[LinkCheck] 🗑️  Stripped (no replacement): ${link.href}`);
     }
   }
 
@@ -78,15 +76,15 @@ async function validateAndFixLinks(htmlContent, site) {
 }
 
 /**
- * Searches the WP site for a post matching the given anchor text.
- * Returns { url, title } of the best match, or null if nothing found.
+ * Searches the WordPress site for a post matching the anchor text.
+ * Returns { url, title } of the best match, or null.
  */
 async function findReplacementPost(query, baseUrl, credentials) {
   if (!query || query.length < 3) return null;
 
   try {
-    const searchUrl = `${baseUrl}/wp-json/wp/v2/posts?search=${encodeURIComponent(query)}&per_page=5&status=publish&_fields=link,title`;
-    const res = await fetch(searchUrl, {
+    const url = `${baseUrl}/wp-json/wp/v2/posts?search=${encodeURIComponent(query)}&per_page=5&status=publish&_fields=link,title`;
+    const res = await fetch(url, {
       headers: { Authorization: `Basic ${credentials}` },
       signal:  AbortSignal.timeout(8000),
     });
@@ -96,10 +94,9 @@ async function findReplacementPost(query, baseUrl, credentials) {
     const posts = await res.json();
     if (!Array.isArray(posts) || posts.length === 0) return null;
 
-    const best = posts[0];
     return {
-      url:   best.link,
-      title: best.title?.rendered ?? query,
+      url:   posts[0].link,
+      title: posts[0].title?.rendered ?? query,
     };
   } catch {
     return null;
