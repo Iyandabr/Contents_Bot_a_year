@@ -65,8 +65,10 @@ TOPIC: "${topic}"
 HIGH eCPM KEYWORDS TO NATURALLY INTEGRATE (weave in contextually — no keyword stuffing):
 ${keywords.join(", ")}
 
+TARGET YEAR: 2027 — write all content, statistics, fees, requirements, and deadlines for 2027. Include "2027" in the title naturally.
+
 SEO REQUIREMENTS:
-- Title: 55–65 characters, primary keyword near the start
+- Title: 55–65 characters, include 2027, primary keyword near the start
 - Meta description: 145–155 characters, include a soft call to action
 - Focus keyphrase: the single most important 2–4 word phrase from the topic
 - Use focus keyphrase in: first 100 words, at least one H2, the conclusion

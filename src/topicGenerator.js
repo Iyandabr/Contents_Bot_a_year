@@ -38,8 +38,8 @@ TODAY'S DATE: ${today}${avoidSection}
 
 Pick ONE specific, high-search-traffic article topic to publish today. Requirements:
 - Directly relevant to the site's audience
-- Specific and actionable (e.g. "Germany Blue Card Salary Requirements 2026", not just "Work in Germany")
-- Timely — relates to current opportunities, seasons, policy updates, or in-demand searches right now
+- Specific and actionable (e.g. "Germany Blue Card Salary Requirements 2027", not just "Work in Germany")
+- TARGET YEAR: 2027 — frame topics around 2027 updates, requirements, deadlines, and opportunities
 - Fresh — must NOT overlap with any of the recently published posts above
 - Examples of good topics for this site: ${profile.examples}
 
