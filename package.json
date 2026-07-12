@@ -1,0 +1,17 @@
+{
+  "name": "contents-bot-a-year",
+  "version": "1.0.0",
+  "description": "Daily new posts + 12-month content refresh bot for WordPress sites",
+  "main": "src/runner.js",
+  "scripts": {
+    "test:publish": "node -e \"require('./src/runner').runAll().then(console.log).catch(console.error)\"",
+    "test:refresh": "node -e \"require('./src/refreshRunner').runRefresh().then(console.log).catch(console.error)\""
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.30.0",
+    "node-fetch": "^3.3.2"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "version": 2,
+  "functions": {
+    "api/publish.js": { "maxDuration": 120 },
+    "api/refresh.js": { "maxDuration": 120 }
+  }
+}
