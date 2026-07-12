@@ -1,7 +1,8 @@
-const { getSites }       = require("./siteManager");
-const { fetchOldPosts }  = require("./fetchOldPosts");
-const { refreshPost }    = require("./refreshPost");
-const { updateWordPress } = require("./updateWordPress");
+const { getSites }            = require("./siteManager");
+const { fetchOldPosts }       = require("./fetchOldPosts");
+const { refreshPost }         = require("./refreshPost");
+const { updateWordPress }     = require("./updateWordPress");
+const { validateAndFixLinks } = require("./validateLinks");
 
 const POSTS_PER_SITE = parseInt(process.env.REFRESH_LIMIT ?? "3", 10); // 2–5, default 3
 
@@ -40,6 +41,7 @@ async function runRefresh() {
     for (const oldPost of oldPosts) {
       try {
         const newContent = await refreshPost(oldPost, site.name);
+        newContent.htmlContent = await validateAndFixLinks(newContent.htmlContent, site);
         const wpResult   = await updateWordPress(oldPost.id, newContent, site);
 
         refreshed.push({

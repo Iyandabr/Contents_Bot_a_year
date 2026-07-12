@@ -1,8 +1,9 @@
-const { getSites }           = require("./siteManager");
-const { generateTopic }      = require("./topicGenerator");
-const { getRecentWPTitles }  = require("./checkDuplicates");
-const { generatePost }       = require("./generatePost");
-const { publishToWordPress } = require("./publishToWordPress");
+const { getSites }            = require("./siteManager");
+const { generateTopic }       = require("./topicGenerator");
+const { getRecentWPTitles }   = require("./checkDuplicates");
+const { generatePost }        = require("./generatePost");
+const { publishToWordPress }  = require("./publishToWordPress");
+const { validateAndFixLinks } = require("./validateLinks");
 
 /**
  * Publishes one fresh new post per site per day.
@@ -25,6 +26,7 @@ async function runAll() {
 
     const topic = await generateTopic(site, recentTitles);
     const post  = await generatePost(topic, site.name, site.niche ?? null);
+    post.htmlContent = await validateAndFixLinks(post.htmlContent, site);
 
     const cats = site.allCategoryIds ?? site.categoryIds;
     const selectedCategoryId = cats[Math.floor(Math.random() * cats.length)];
