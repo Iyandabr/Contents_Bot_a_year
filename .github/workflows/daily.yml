@@ -1,9 +1,10 @@
-name: Daily Publish + Refresh
+name: Daily Publish + Refresh + SEO
 
 on:
   schedule:
     - cron: '30 8 * * *'  # 8:30am UTC daily — new post (30 min after opportunitybot)
     - cron: '30 20 * * *' # 8:30pm UTC daily — refresh run
+    - cron: '0 23 * * *'  # 11:00pm UTC daily — SEO audit (midnight BST)
   workflow_dispatch:       # allow manual trigger from GitHub UI
 
 jobs:
@@ -24,3 +25,12 @@ jobs:
         run: |
           curl --max-time 150 --fail-with-body \
             "https://contents-bot-a-year.vercel.app/api/refresh?site=Fulloaded"
+
+  seo:
+    if: github.event.schedule == '0 23 * * *' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: SEO Audit Fulloaded
+        run: |
+          curl --max-time 150 --fail-with-body \
+            "https://contents-bot-a-year.vercel.app/api/seo?site=Fulloaded"
