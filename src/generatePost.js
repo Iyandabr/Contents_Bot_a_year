@@ -1,5 +1,6 @@
 const Anthropic = require("@anthropic-ai/sdk");
 const { getRelevantKeywords, detectNiche } = require("./highEcpmKeywords");
+const { getTargetYear } = require("./targetYear");
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -55,11 +56,13 @@ async function generatePost(topic, siteName = null, siteNiche = null) {
     ? `<p><em>Disclaimer: ${persona.disclaimer}</em></p>`
     : "";
 
+  const targetYear = getTargetYear();
+
   const context = `Site: ${persona.site}
 Audience: ${persona.audience}
 Tone: ${persona.tone}
 Topic: "${topic}"
-Target year: 2027
+Target year: ${targetYear}
 Keywords to weave in naturally: ${keywords.join(", ")}`;
 
   // ── Call 1: metadata only (no HTML — clean JSON every time) ──────────────
@@ -71,7 +74,7 @@ Keywords to weave in naturally: ${keywords.join(", ")}`;
       content: `${context}
 
 Return ONLY this JSON object (single line, no extra text):
-{"title":"55-65 char title including 2027","slug":"url-slug-2027","focusKeyphrase":"2-4 word phrase","excerpt":"under 160 chars","seoDescription":"145-155 chars with CTA","tags":["tag1","tag2","tag3","tag4","tag5","tag6"],"estimatedReadTime":"X min read"}`,
+{"title":"55-65 char title — include ${targetYear} only if it naturally improves the title","slug":"url-slug","focusKeyphrase":"2-4 word phrase","excerpt":"under 160 chars","seoDescription":"145-155 chars with CTA","tags":["tag1","tag2","tag3","tag4","tag5","tag6"],"estimatedReadTime":"X min read"}`,
     }],
   });
 
@@ -99,7 +102,7 @@ Write the full HTML article body for this post. Requirements:
 - Structure: <h2> sections, <h3> subsections, <p>, <ul><li>, <strong>, <blockquote>
 - Include a <div class="faq-section"> with 2–3 FAQs using <h3 class="faq-question"> and <p class="faq-answer">
 - Include 2 hyperlinks to real official/authoritative external sources only — do NOT invent internal site links
-- All stats, fees, and requirements should reflect 2027 data
+- All stats, fees, and requirements should reflect ${targetYear} data
 - End with: ${disclaimerLine || `<p><em>Always do your own research before making a decision.</em></p>`}
 - Final paragraph must include: "${persona.cta}"
 

@@ -1,4 +1,5 @@
 const Anthropic = require("@anthropic-ai/sdk");
+const { getTargetYear } = require("./targetYear");
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -17,8 +18,9 @@ const DEFAULT_PROFILE = {
 };
 
 async function generateTopic(site, recentTitles = []) {
-  const profile = SITE_PROFILES[site.name] ?? DEFAULT_PROFILE;
-  const today   = new Date().toISOString().split("T")[0];
+  const profile    = SITE_PROFILES[site.name] ?? DEFAULT_PROFILE;
+  const today      = new Date().toISOString().split("T")[0];
+  const targetYear = getTargetYear();
 
   const avoidSection = recentTitles.length > 0
     ? `\nRecently published posts (do NOT repeat or closely overlap any of these):\n${
@@ -38,8 +40,9 @@ TODAY'S DATE: ${today}${avoidSection}
 
 Pick ONE specific, high-search-traffic article topic to publish today. Requirements:
 - Directly relevant to the site's audience
-- Specific and actionable (e.g. "Germany Blue Card Salary Requirements 2027", not just "Work in Germany")
-- TARGET YEAR: 2027 — frame topics around 2027 updates, requirements, deadlines, and opportunities
+- Specific and actionable (e.g. "Germany Blue Card Salary Requirements", not just "Work in Germany")
+- TARGET YEAR: ${targetYear} — frame topics around ${targetYear} updates, requirements, deadlines, and opportunities
+- Include ${targetYear} in the topic title only if it naturally fits (e.g. "Canada Express Entry Draw ${targetYear}" yes; "How to Write a CV ${targetYear}" no)
 - Fresh — must NOT overlap with any of the recently published posts above
 - Examples of good topics for this site: ${profile.examples}
 
