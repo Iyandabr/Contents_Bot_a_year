@@ -57,72 +57,59 @@ async function generatePost(topic, siteName = null, siteNiche = null) {
 
   const prompt = `You are a senior SEO content strategist writing for ${persona.site}.
 
-TARGET AUDIENCE: ${persona.audience}
-TONE: ${persona.tone}
+  const context = `Site: ${persona.site}
+Audience: ${persona.audience}
+Tone: ${persona.tone}
+Topic: "${topic}"
+Target year: 2027
+Keywords to weave in naturally: ${keywords.join(", ")}`;
 
-TOPIC: "${topic}"
-
-HIGH eCPM KEYWORDS TO NATURALLY INTEGRATE (weave in contextually — no keyword stuffing):
-${keywords.join(", ")}
-
-TARGET YEAR: 2027 — write all content, statistics, fees, requirements, and deadlines for 2027. Include "2027" in the title naturally.
-
-SEO REQUIREMENTS:
-- Title: 55–65 characters, include 2027, primary keyword near the start
-- Meta description: 145–155 characters, include a soft call to action
-- Focus keyphrase: the single most important 2–4 word phrase from the topic
-- Use focus keyphrase in: first 100 words, at least one H2, the conclusion
-- Content: 500–700 words
-
-HTML STRUCTURE:
-- <h2> for 3–4 main sections
-- <h3> for subsections where needed
-- <p> for body paragraphs
-- <ul><li> or <ol><li> for lists
-- <strong> for key terms
-- <blockquote> for one key quote or stat
-- <div class="faq-section"> wrapping an FAQ of 2–3 questions, each with:
-    <h3 class="faq-question">Q: ...</h3>
-    <p class="faq-answer">A: ...</p>
-- End with: ${disclaimerLine || `<p><em>Always do your own research before making a decision.</em></p>`}
-
-CONTENT RULES:
-- Open with a compelling hook (stat, surprising fact, or relatable scenario)
-- Include at least 2 hyperlinks to authoritative external sources (official sites, major publications)
-- Be specific: real prices, dates, requirements, or data points
-- End with a strong conclusion that includes: "${persona.cta}"
-- Write every paragraph to add genuine value — no filler
-
-Return your response in EXACTLY this two-part format — nothing else:
-
-{"title":"SEO title","slug":"url-slug","focusKeyphrase":"2-4 word phrase","excerpt":"under 160 chars","seoDescription":"145-155 chars","tags":["tag1","tag2","tag3","tag4","tag5","tag6"],"estimatedReadTime":"X min read"}
-===HTML===
-<full HTML post body here — 600+ words>`;
-
-  const message = await client.messages.create({
+  // ── Call 1: metadata only (no HTML — clean JSON every time) ──────────────
+  const metaMsg = await client.messages.create({
     model:      "claude-haiku-4-5-20251001",
-    max_tokens: 8000,
-    messages:   [{ role: "user", content: prompt }],
+    max_tokens: 400,
+    messages:   [{
+      role:    "user",
+      content: `${context}
+
+Return ONLY this JSON object (single line, no extra text):
+{"title":"55-65 char title including 2027","slug":"url-slug-2027","focusKeyphrase":"2-4 word phrase","excerpt":"under 160 chars","seoDescription":"145-155 chars with CTA","tags":["tag1","tag2","tag3","tag4","tag5","tag6"],"estimatedReadTime":"X min read"}`,
+    }],
   });
 
-  const raw   = message.content[0].text.trim();
-  const parts = raw.split(/===HTML===/i);
-
-  if (parts.length < 2) {
-    throw new Error("Claude response missing ===HTML=== separator:\n" + raw.slice(0, 300));
-  }
-
-  const jsonPart = parts[0].replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
-  const htmlPart = parts.slice(1).join("===HTML===").trim();
-
+  const metaRaw = metaMsg.content[0].text.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
   let post;
   try {
-    post = JSON.parse(jsonPart);
+    post = JSON.parse(metaRaw.match(/\{[\s\S]*\}/)?.[0] ?? metaRaw);
   } catch {
-    throw new Error("Claude returned invalid JSON metadata:\n" + jsonPart.slice(0, 300));
+    throw new Error("Metadata JSON parse failed:\n" + metaRaw.slice(0, 200));
   }
 
-  post.htmlContent = htmlPart;
+  // ── Call 2: HTML content only (no JSON — no parsing needed) ──────────────
+  const htmlMsg = await client.messages.create({
+    model:      "claude-haiku-4-5-20251001",
+    max_tokens: 7000,
+    messages:   [{
+      role:    "user",
+      content: `${context}
+Title: "${post.title}"
+Focus keyphrase: "${post.focusKeyphrase}"
+
+Write the full HTML article body for this post. Requirements:
+- 600–800 words
+- Use focus keyphrase in first 100 words, at least one H2, and conclusion
+- Structure: <h2> sections, <h3> subsections, <p>, <ul><li>, <strong>, <blockquote>
+- Include a <div class="faq-section"> with 2–3 FAQs using <h3 class="faq-question"> and <p class="faq-answer">
+- Include at least 2 hyperlinks to real authoritative external sources
+- All stats, fees, and requirements should reflect 2027 data
+- End with: ${disclaimerLine || `<p><em>Always do your own research before making a decision.</em></p>`}
+- Final paragraph must include: "${persona.cta}"
+
+Return ONLY the HTML — no JSON, no markdown, no explanation.`,
+    }],
+  });
+
+  post.htmlContent = htmlMsg.content[0].text.trim();
 
   console.log(`[Claude] "${post.title}" | kw: "${post.focusKeyphrase}"`);
   return { ...post, niche };
