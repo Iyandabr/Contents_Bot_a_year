@@ -93,39 +93,36 @@ CONTENT RULES:
 - End with a strong conclusion that includes: "${persona.cta}"
 - Write every paragraph to add genuine value — no filler
 
-Return ONLY a valid JSON object (no markdown fences, no extra text):
-{
-  "title": "SEO title string",
-  "slug": "url-friendly-slug-no-year-unless-needed",
-  "focusKeyphrase": "2-4 word phrase",
-  "excerpt": "Post excerpt under 160 chars",
-  "seoDescription": "Yoast/RankMath meta description 145-155 chars",
-  "tags": ["tag1","tag2","tag3","tag4","tag5","tag6"],
-  "estimatedReadTime": "X min read",
-  "htmlContent": "<full HTML post body — 600+ words>"
-}`;
+Return your response in EXACTLY this two-part format — nothing else:
+
+{"title":"SEO title","slug":"url-slug","focusKeyphrase":"2-4 word phrase","excerpt":"under 160 chars","seoDescription":"145-155 chars","tags":["tag1","tag2","tag3","tag4","tag5","tag6"],"estimatedReadTime":"X min read"}
+===HTML===
+<full HTML post body here — 600+ words>`;
 
   const message = await client.messages.create({
     model:      "claude-haiku-4-5-20251001",
-    max_tokens: 6000,
+    max_tokens: 8000,
     messages:   [{ role: "user", content: prompt }],
   });
 
-  const raw      = message.content[0].text.trim();
-  const stripped = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
+  const raw   = message.content[0].text.trim();
+  const parts = raw.split(/===HTML===/i);
+
+  if (parts.length < 2) {
+    throw new Error("Claude response missing ===HTML=== separator:\n" + raw.slice(0, 300));
+  }
+
+  const jsonPart = parts[0].replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+  const htmlPart = parts.slice(1).join("===HTML===").trim();
 
   let post;
   try {
-    post = JSON.parse(stripped);
+    post = JSON.parse(jsonPart);
   } catch {
-    const match = stripped.match(/\{[\s\S]*\}/);
-    if (match) {
-      try { post = JSON.parse(match[0]); }
-      catch { throw new Error("Claude returned invalid JSON:\n" + stripped.slice(0, 400)); }
-    } else {
-      throw new Error("Claude returned invalid JSON:\n" + stripped.slice(0, 400));
-    }
+    throw new Error("Claude returned invalid JSON metadata:\n" + jsonPart.slice(0, 300));
   }
+
+  post.htmlContent = htmlPart;
 
   console.log(`[Claude] "${post.title}" | kw: "${post.focusKeyphrase}"`);
   return { ...post, niche };
