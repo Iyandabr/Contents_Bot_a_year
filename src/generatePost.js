@@ -55,8 +55,6 @@ async function generatePost(topic, siteName = null, siteNiche = null) {
     ? `<p><em>Disclaimer: ${persona.disclaimer}</em></p>`
     : "";
 
-  const prompt = `You are a senior SEO content strategist writing for ${persona.site}.
-
   const context = `Site: ${persona.site}
 Audience: ${persona.audience}
 Tone: ${persona.tone}
