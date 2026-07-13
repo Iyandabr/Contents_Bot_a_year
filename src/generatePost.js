@@ -89,7 +89,7 @@ Return ONLY this JSON object (single line, no extra text):
 
   // ── Call 2: HTML content only (no JSON — no parsing needed) ──────────────
   const htmlMsg = await client.messages.create({
-    model:      "claude-haiku-4-5-20251001",
+    model:      "claude-sonnet-4-6",
     max_tokens: 7000,
     messages:   [{
       role:    "user",
