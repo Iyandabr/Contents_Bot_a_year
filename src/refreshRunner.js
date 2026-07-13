@@ -4,7 +4,7 @@ const { refreshPost }         = require("./refreshPost");
 const { updateWordPress }     = require("./updateWordPress");
 const { validateAndFixLinks } = require("./validateLinks");
 
-const POSTS_PER_SITE = parseInt(process.env.REFRESH_LIMIT ?? "3", 10); // 2–5, default 3
+const POSTS_PER_SITE = parseInt(process.env.REFRESH_LIMIT ?? "2", 10); // default 2 to stay within 120s
 
 /**
  * Every 12 hours: picks the oldest-modified posts per site and refreshes them.

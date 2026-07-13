@@ -37,7 +37,7 @@ async function validateAndFixLinks(htmlContent, site) {
         const res = await fetch(link.href, {
           method:   "HEAD",
           headers:  { "User-Agent": "Mozilla/5.0 (compatible; ContentBot/1.0)" },
-          signal:   AbortSignal.timeout(8000),
+          signal:   AbortSignal.timeout(4000),
           redirect: "follow",
         });
         return { ...link, status: res.status, ok: res.status < 400 };
