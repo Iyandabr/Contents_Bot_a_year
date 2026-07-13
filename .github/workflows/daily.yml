@@ -20,7 +20,7 @@ jobs:
     if: github.event.schedule == '30 20 * * *' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
-      - name: Refresh old content
+      - name: Refresh Fulloaded
         run: |
-          curl --max-time 180 --fail-with-body \
-            "https://contents-bot-a-year.vercel.app/api/refresh"
+          curl --max-time 150 --fail-with-body \
+            "https://contents-bot-a-year.vercel.app/api/refresh?site=Fulloaded"

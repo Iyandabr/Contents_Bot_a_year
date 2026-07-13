@@ -9,11 +9,12 @@ module.exports = async (req, res) => {
     }
   }
 
-  console.log("[/api/refresh] Starting 12-hour content refresh run...");
+  const siteName = req.query?.site ?? null;
+  console.log(`[/api/refresh] Starting refresh | site: ${siteName ?? "all"}`);
   const start = Date.now();
 
   try {
-    const results = await runRefresh();
+    const results = await runRefresh(siteName);
     const elapsed = ((Date.now() - start) / 1000).toFixed(1);
 
     const summary = results.map((r) => ({

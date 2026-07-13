@@ -10,9 +10,14 @@ const POSTS_PER_SITE = parseInt(process.env.REFRESH_LIMIT ?? "3", 10); // 2–5,
  * Every 12 hours: picks the oldest-modified posts per site and refreshes them.
  * Updated posts get today's date so they pop to the top as new.
  */
-async function runRefresh() {
-  const sites = getSites();
-  console.log(`\n[Refresh] ${sites.length} site(s): ${sites.map((s) => s.name).join(", ")}`);
+async function runRefresh(siteName = null) {
+  const allSites = getSites();
+  const sites = siteName
+    ? allSites.filter((s) => s.name.toLowerCase() === siteName.toLowerCase())
+    : allSites;
+
+  if (sites.length === 0) throw new Error(`No site found matching "${siteName}"`);
+  console.log(`\n[Refresh] Processing: ${sites.map((s) => s.name).join(", ")}`);
 
   const results = [];
 
