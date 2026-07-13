@@ -98,7 +98,7 @@ Write the full HTML article body for this post. Requirements:
 - Use focus keyphrase in first 100 words, at least one H2, and conclusion
 - Structure: <h2> sections, <h3> subsections, <p>, <ul><li>, <strong>, <blockquote>
 - Include a <div class="faq-section"> with 2–3 FAQs using <h3 class="faq-question"> and <p class="faq-answer">
-- Include at least 2 hyperlinks to real authoritative external sources
+- Include 2 hyperlinks to real official/authoritative external sources only — do NOT invent internal site links
 - All stats, fees, and requirements should reflect 2027 data
 - End with: ${disclaimerLine || `<p><em>Always do your own research before making a decision.</em></p>`}
 - Final paragraph must include: "${persona.cta}"
@@ -107,7 +107,10 @@ Return ONLY the HTML — no JSON, no markdown, no explanation.`,
     }],
   });
 
-  post.htmlContent = htmlMsg.content[0].text.trim();
+  post.htmlContent = htmlMsg.content[0].text.trim()
+    .replace(/^```(?:html|HTML)?\s*/i, "")
+    .replace(/\s*```$/, "")
+    .trim();
 
   console.log(`[Claude] "${post.title}" | kw: "${post.focusKeyphrase}"`);
   return { ...post, niche };

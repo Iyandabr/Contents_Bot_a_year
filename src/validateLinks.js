@@ -1,11 +1,14 @@
 /**
- * Scans HTML content for all <a href> links and validates them.
+ * Validates internal links only.
+ *
+ * External links (to government sites, official sources, etc.) are left
+ * exactly as Claude wrote them — replacing them with unrelated internal
+ * posts damages credibility.
  *
  * Internal broken links → search own site for a relevant post and replace.
- * External broken links → search own site for a relevant post and replace
- *                         (taking ownership). If no match found, strip the
- *                         anchor entirely and keep the visible text.
- * Working links (internal or external) → left as-is.
+ *                         If no match found, strip the anchor, keep visible text.
+ * Internal working links → left as-is.
+ * External links → always left as-is.
  */
 async function validateAndFixLinks(htmlContent, site) {
   const base        = site.url.replace(/\/$/, "");
@@ -21,16 +24,22 @@ async function validateAndFixLinks(htmlContent, site) {
     const hrefMatch = /href=["']([^"']+)["']/i.exec(attrsStr);
     if (!hrefMatch) continue;
 
-    const href      = hrefMatch[1];
-    const fullHref  = href.startsWith("http") ? href : `${base}${href.startsWith("/") ? "" : "/"}${href}`;
+    const href       = hrefMatch[1];
+    const fullHref   = href.startsWith("http") ? href : `${base}${href.startsWith("/") ? "" : "/"}${href}`;
     const isInternal = fullHref.startsWith(base);
 
-    found.push({ full: match[0], href: fullHref, text: match[2], innerText, isInternal });
+    // Skip external links entirely — they link to authoritative sources and should not be touched
+    if (!isInternal) {
+      console.log(`[LinkCheck] ⏭️  External link kept as-is: ${fullHref}`);
+      continue;
+    }
+
+    found.push({ full: match[0], href: fullHref, text: match[2], innerText });
   }
 
   if (found.length === 0) return htmlContent;
 
-  // Check all links in parallel
+  // Check internal links in parallel
   const checked = await Promise.all(
     found.map(async (link) => {
       try {
@@ -51,24 +60,21 @@ async function validateAndFixLinks(htmlContent, site) {
 
   for (const link of checked) {
     if (link.ok) {
-      console.log(`[LinkCheck] ✅ ${link.isInternal ? "Internal" : "External"} OK (${link.status}): ${link.href}`);
+      console.log(`[LinkCheck] ✅ Internal OK (${link.status}): ${link.href}`);
       continue;
     }
 
-    // Broken — whether internal or external, try to replace with an own-site post
-    const type = link.isInternal ? "internal" : "external";
-    console.log(`[LinkCheck] ❌ Broken ${type} link (${link.status}): ${link.href} — finding replacement...`);
+    console.log(`[LinkCheck] ❌ Broken internal link (${link.status}): ${link.href} — finding replacement...`);
 
     const replacement = await findReplacementPost(link.innerText, base, credentials);
 
     if (replacement) {
       const fixed = link.full.replace(link.href, replacement.url);
       cleaned = cleaned.replace(link.full, fixed);
-      console.log(`[LinkCheck] 🔁 Replaced with own post: ${replacement.url} ("${replacement.title}")`);
+      console.log(`[LinkCheck] 🔁 Replaced with: ${replacement.url} ("${replacement.title}")`);
     } else {
-      // Nothing relevant found — strip the anchor, keep visible text
       cleaned = cleaned.replace(link.full, link.text);
-      console.log(`[LinkCheck] 🗑️  Stripped (no replacement): ${link.href}`);
+      console.log(`[LinkCheck] 🗑️  Stripped (no replacement found): ${link.href}`);
     }
   }
 
