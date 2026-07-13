@@ -14,7 +14,9 @@ module.exports = async (req, res) => {
   const start = Date.now();
 
   try {
-    const results = await runAll();
+    const siteName = req.query?.site ?? null;
+    console.log(`[API /publish] site: ${siteName ?? "all"}`);
+    const results = await runAll(siteName);
     const elapsed = ((Date.now() - start) / 1000).toFixed(1);
 
     const summary = results.map((r) => ({

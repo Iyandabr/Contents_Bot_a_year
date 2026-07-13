@@ -9,9 +9,14 @@ const { selectCategory }      = require("./selectCategory");
 /**
  * Publishes one fresh new post per site per day.
  */
-async function runAll() {
-  const sites = getSites();
-  console.log(`\n[Runner] ${sites.length} site(s): ${sites.map((s) => s.name).join(", ")}`);
+async function runAll(siteName = null) {
+  const allSites = getSites();
+  const sites = siteName
+    ? allSites.filter((s) => s.name.toLowerCase() === siteName.toLowerCase())
+    : allSites;
+
+  if (sites.length === 0) throw new Error(`No site found matching "${siteName}"`);
+  console.log(`\n[Runner] Processing: ${sites.map((s) => s.name).join(", ")}`);
 
   const results = [];
 
