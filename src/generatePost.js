@@ -1,6 +1,7 @@
 const Anthropic = require("@anthropic-ai/sdk");
 const { getRelevantKeywords, detectNiche } = require("./highEcpmKeywords");
 const { getTargetYear } = require("./targetYear");
+const { WRITING_STYLE } = require("./writingStyle");
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -106,7 +107,9 @@ Write the full HTML article body for this post. Requirements:
 - End with: ${disclaimerLine || `<p><em>Always do your own research before making a decision.</em></p>`}
 - Final paragraph must include: "${persona.cta}"
 
-Return ONLY the HTML — no JSON, no markdown, no explanation.`,
+${WRITING_STYLE}
+
+Return ONLY the HTML — no JSON, no markdown fences, no explanation.`,
     }],
   });
 

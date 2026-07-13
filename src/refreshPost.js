@@ -1,5 +1,6 @@
 const Anthropic = require("@anthropic-ai/sdk");
 const { getRelevantKeywords, detectNiche } = require("./highEcpmKeywords");
+const { WRITING_STYLE } = require("./writingStyle");
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -103,6 +104,8 @@ CONTENT RULES:
 - Open with a compelling ${year} hook
 - Include 2 hyperlinks to real official/authoritative external sources only — do NOT invent internal site links
 - End with: "${persona.cta}"
+
+${WRITING_STYLE}
 
 Return ONLY the HTML — no JSON, no markdown fences, no explanation.`,
     }],
