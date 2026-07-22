@@ -1,8 +1,9 @@
 {
   "version": 2,
   "functions": {
-    "api/publish.js": { "maxDuration": 120 },
-    "api/refresh.js": { "maxDuration": 120 },
-    "api/seo.js":     { "maxDuration": 120 }
+    "api/publish.js":   { "maxDuration": 120 },
+    "api/refresh.js":   { "maxDuration": 120 },
+    "api/seo.js":       { "maxDuration": 120 },
+    "api/freshness.js": { "maxDuration": 120 }
   }
 }

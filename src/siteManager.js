@@ -39,6 +39,7 @@ function getSites() {
         authorId:       s.authorId ?? null,
         niche:          s.niche ?? null,
         uniqueContent:  s.uniqueContent ?? true,
+        gscSiteUrl:     s.gscSiteUrl ?? null, // Search Console property, if different from `url`
       };
     });
   }

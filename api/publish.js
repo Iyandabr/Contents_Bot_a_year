@@ -1,4 +1,5 @@
-const { runAll } = require("../src/runner");
+const { runAll }    = require("../src/runner");
+const { notifyRun } = require("../src/notify");
 
 module.exports = async (req, res) => {
   // Optional auth check
@@ -24,12 +25,16 @@ module.exports = async (req, res) => {
       success: r.success,
       title:   r.title ?? r.error,
       url:     r.postUrl ?? null,
+      brokenExternalLinks: r.brokenExternalLinks ?? [],
     }));
+
+    await notifyRun("Publish", results);
 
     console.log(`[/api/publish] Done in ${elapsed}s`);
     return res.status(200).json({ ok: true, elapsed: `${elapsed}s`, results: summary });
   } catch (err) {
     console.error("[/api/publish] Fatal:", err.message);
+    await notifyRun("Publish", [{ site: req.query?.site ?? "all", success: false, error: err.message }], { onlyOnFailure: false });
     return res.status(500).json({ ok: false, error: err.message });
   }
 };

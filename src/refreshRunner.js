@@ -46,7 +46,8 @@ async function runRefresh(siteName = null) {
     for (const oldPost of oldPosts) {
       try {
         const newContent = await refreshPost(oldPost, site.name);
-        newContent.htmlContent = await validateAndFixLinks(newContent.htmlContent, site);
+        const { html, brokenExternalLinks } = await validateAndFixLinks(newContent.htmlContent, site);
+        newContent.htmlContent = html;
         const wpResult   = await updateWordPress(oldPost.id, newContent, site);
 
         refreshed.push({
@@ -55,6 +56,7 @@ async function runRefresh(siteName = null) {
           newTitle: newContent.title,
           newSlug:  newContent.slug,
           postUrl:  wpResult.link,
+          brokenExternalLinks,
           success:  true,
         });
       } catch (err) {

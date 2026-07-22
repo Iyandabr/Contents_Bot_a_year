@@ -17,7 +17,7 @@ const DEFAULT_PROFILE = {
   examples:    "skilled worker visa guides, fully funded scholarships, work abroad opportunities",
 };
 
-async function generateTopic(site, recentTitles = []) {
+async function generateTopic(site, recentTitles = [], topQueries = []) {
   const profile    = SITE_PROFILES[site.name] ?? DEFAULT_PROFILE;
   const today      = new Date().toISOString().split("T")[0];
   const targetYear = getTargetYear();
@@ -25,6 +25,12 @@ async function generateTopic(site, recentTitles = []) {
   const avoidSection = recentTitles.length > 0
     ? `\nRecently published posts (do NOT repeat or closely overlap any of these):\n${
         recentTitles.slice(0, 40).map((t, i) => `${i + 1}. ${t}`).join("\n")
+      }`
+    : "";
+
+  const performanceSection = topQueries.length > 0
+    ? `\nTOP-PERFORMING SEARCH QUERIES for this site in the last 28 days (readers are actively finding this site via these — prefer a fresh, non-duplicate angle on one of these themes over a cold topic):\n${
+        topQueries.slice(0, 15).map((q, i) => `${i + 1}. "${q.query}" (${q.clicks} clicks, ${q.impressions} impressions)`).join("\n")
       }`
     : "";
 
@@ -36,7 +42,7 @@ async function generateTopic(site, recentTitles = []) {
       content: `You are a content strategist for "${site.name}", a website covering: ${profile.description}.
 
 TARGET AUDIENCE: ${profile.audience}
-TODAY'S DATE: ${today}${avoidSection}
+TODAY'S DATE: ${today}${avoidSection}${performanceSection}
 
 Pick ONE specific, high-search-traffic article topic to publish today. Requirements:
 - Directly relevant to the site's audience
@@ -44,6 +50,7 @@ Pick ONE specific, high-search-traffic article topic to publish today. Requireme
 - TARGET YEAR: ${targetYear} — frame topics around ${targetYear} updates, requirements, deadlines, and opportunities
 - Include ${targetYear} in the topic title only if it naturally fits (e.g. "Canada Express Entry Draw ${targetYear}" yes; "How to Write a CV ${targetYear}" no)
 - Fresh — must NOT overlap with any of the recently published posts above
+- If TOP-PERFORMING SEARCH QUERIES are listed above, strongly prefer a topic building on one of those themes with a fresh angle
 - Examples of good topics for this site: ${profile.examples}
 
 Return ONLY the topic title. No explanation, no numbering, no quotes, no punctuation at the end.`,

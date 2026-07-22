@@ -5,6 +5,7 @@ const { generatePost }        = require("./generatePost");
 const { publishToWordPress }  = require("./publishToWordPress");
 const { validateAndFixLinks } = require("./validateLinks");
 const { selectCategory }      = require("./selectCategory");
+const { getTopQueries }       = require("./performanceInsights");
 
 /**
  * Publishes one fresh new post per site per day.
@@ -23,16 +24,20 @@ async function runAll(siteName = null) {
   for (const site of sites) {
     console.log(`\n── New Post: ${site.name} (${site.url}) ──────────────────────`);
 
-    let recentTitles = [];
-    try {
-      recentTitles = await getRecentWPTitles(site, 50);
-    } catch (err) {
-      console.warn(`[Runner:${site.name}] Could not fetch recent titles: ${err.message}`);
+    const [titlesResult, queriesResult] = await Promise.allSettled([
+      getRecentWPTitles(site, 50),
+      getTopQueries(site),
+    ]);
+    const recentTitles = titlesResult.status === "fulfilled" ? titlesResult.value : [];
+    const topQueries   = queriesResult.status === "fulfilled" ? queriesResult.value : [];
+    if (titlesResult.status === "rejected") {
+      console.warn(`[Runner:${site.name}] Could not fetch recent titles: ${titlesResult.reason.message}`);
     }
 
-    const topic = await generateTopic(site, recentTitles);
+    const topic = await generateTopic(site, recentTitles, topQueries);
     const post  = await generatePost(topic, site.name, site.niche ?? null);
-    post.htmlContent = await validateAndFixLinks(post.htmlContent, site);
+    const { html, brokenExternalLinks } = await validateAndFixLinks(post.htmlContent, site);
+    post.htmlContent = html;
 
     const selectedCategoryId = await selectCategory(topic, site);
     const siteForPublish = { ...site, categoryIds: [selectedCategoryId] };
@@ -49,6 +54,7 @@ async function runAll(siteName = null) {
         postUrl:  wpResult.link,
         title:    wpResult.title?.rendered ?? post.title,
         topic,
+        brokenExternalLinks,
       };
     } catch (err) {
       console.error(`[Runner:${site.name}] ❌ Failed: ${err.message}`);

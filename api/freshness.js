@@ -1,5 +1,5 @@
-const { runRefresh } = require("../src/refreshRunner");
-const { notifyRun }  = require("../src/notify");
+const { runFreshnessSweep } = require("../src/freshnessRunner");
+const { notifyRun }         = require("../src/notify");
 
 module.exports = async (req, res) => {
   const secret = process.env.CRON_SECRET;
@@ -11,11 +11,11 @@ module.exports = async (req, res) => {
   }
 
   const siteName = req.query?.site ?? null;
-  console.log(`[/api/refresh] Starting refresh | site: ${siteName ?? "all"}`);
+  console.log(`[/api/freshness] Starting freshness sweep | site: ${siteName ?? "all"}`);
   const start = Date.now();
 
   try {
-    const results = await runRefresh(siteName);
+    const results = await runFreshnessSweep(siteName);
     const elapsed = ((Date.now() - start) / 1000).toFixed(1);
 
     const summary = results.map((r) => ({
@@ -32,13 +32,13 @@ module.exports = async (req, res) => {
       })),
     }));
 
-    await notifyRun("Refresh", results);
+    await notifyRun("Freshness Sweep", results);
 
-    console.log(`[/api/refresh] Done in ${elapsed}s`);
+    console.log(`[/api/freshness] Done in ${elapsed}s`);
     return res.status(200).json({ ok: true, elapsed: `${elapsed}s`, results: summary });
   } catch (err) {
-    console.error("[/api/refresh] Fatal:", err.message);
-    await notifyRun("Refresh", [{ site: siteName ?? "all", success: false, error: err.message }], { onlyOnFailure: false });
+    console.error("[/api/freshness] Fatal:", err.message);
+    await notifyRun("Freshness Sweep", [{ site: siteName ?? "all", success: false, error: err.message }], { onlyOnFailure: false });
     return res.status(500).json({ ok: false, error: err.message });
   }
 };

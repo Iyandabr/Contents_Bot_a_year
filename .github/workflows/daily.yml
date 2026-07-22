@@ -5,6 +5,7 @@ on:
     - cron: '30 8 * * *'  # 8:30am UTC daily — new post (30 min after opportunitybot)
     - cron: '30 20 * * *' # 8:30pm UTC daily — refresh run
     - cron: '0 23 * * *'  # 11:00pm UTC daily — SEO audit (midnight BST)
+    - cron: '30 2 * * *'  # 2:30am UTC daily — freshness sweep (30 min after opportunitybot's)
   workflow_dispatch:       # allow manual trigger from GitHub UI
 
 jobs:
@@ -34,3 +35,12 @@ jobs:
         run: |
           curl --max-time 150 --fail-with-body \
             "https://contents-bot-a-year.vercel.app/api/seo?site=Fulloaded"
+
+  freshness:
+    if: github.event.schedule == '30 2 * * *' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Freshness Sweep Fulloaded
+        run: |
+          curl --max-time 150 --fail-with-body \
+            "https://contents-bot-a-year.vercel.app/api/freshness?site=Fulloaded"
