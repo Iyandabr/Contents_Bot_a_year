@@ -3,6 +3,8 @@ const { findStalePosts }      = require("./checkFreshness");
 const { refreshPost }         = require("./refreshPost");
 const { updateWordPress }     = require("./updateWordPress");
 const { validateAndFixLinks } = require("./validateLinks");
+const { injectFaqSchema }     = require("./faqSchema");
+const { pingSitemap }         = require("./pingSitemap");
 
 const POSTS_PER_SITE = parseInt(process.env.FRESHNESS_LIMIT ?? "2", 10);
 
@@ -49,8 +51,9 @@ async function runFreshnessSweep(siteName = null) {
       try {
         const newContent = await refreshPost(stalePost, site.name);
         const { html, brokenExternalLinks } = await validateAndFixLinks(newContent.htmlContent, site);
-        newContent.htmlContent = html;
+        newContent.htmlContent = injectFaqSchema(html);
         const wpResult = await updateWordPress(stalePost.id, newContent, site);
+        await pingSitemap(site);
 
         refreshed.push({
           postId:   stalePost.id,

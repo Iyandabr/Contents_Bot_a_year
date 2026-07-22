@@ -3,6 +3,8 @@ const { fetchOldPosts }       = require("./fetchOldPosts");
 const { refreshPost }         = require("./refreshPost");
 const { updateWordPress }     = require("./updateWordPress");
 const { validateAndFixLinks } = require("./validateLinks");
+const { injectFaqSchema }     = require("./faqSchema");
+const { pingSitemap }         = require("./pingSitemap");
 
 const POSTS_PER_SITE = parseInt(process.env.REFRESH_LIMIT ?? "2", 10); // default 2 to stay within 120s
 
@@ -47,8 +49,9 @@ async function runRefresh(siteName = null) {
       try {
         const newContent = await refreshPost(oldPost, site.name);
         const { html, brokenExternalLinks } = await validateAndFixLinks(newContent.htmlContent, site);
-        newContent.htmlContent = html;
+        newContent.htmlContent = injectFaqSchema(html);
         const wpResult   = await updateWordPress(oldPost.id, newContent, site);
+        await pingSitemap(site);
 
         refreshed.push({
           postId:   oldPost.id,

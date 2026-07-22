@@ -6,6 +6,8 @@ const { publishToWordPress }  = require("./publishToWordPress");
 const { validateAndFixLinks } = require("./validateLinks");
 const { selectCategory }      = require("./selectCategory");
 const { getTopQueries }       = require("./performanceInsights");
+const { injectFaqSchema }     = require("./faqSchema");
+const { pingSitemap }         = require("./pingSitemap");
 
 /**
  * Publishes one fresh new post per site per day.
@@ -37,7 +39,7 @@ async function runAll(siteName = null) {
     const topic = await generateTopic(site, recentTitles, topQueries);
     const post  = await generatePost(topic, site.name, site.niche ?? null);
     const { html, brokenExternalLinks } = await validateAndFixLinks(post.htmlContent, site);
-    post.htmlContent = html;
+    post.htmlContent = injectFaqSchema(html);
 
     const selectedCategoryId = await selectCategory(topic, site);
     const siteForPublish = { ...site, categoryIds: [selectedCategoryId] };
@@ -46,6 +48,7 @@ async function runAll(siteName = null) {
     let result;
     try {
       const wpResult = await publishToWordPress(post, siteForPublish);
+      await pingSitemap(site);
       result = {
         site:     site.name,
         type:     "new_post",

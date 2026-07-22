@@ -40,6 +40,7 @@ function getSites() {
         niche:          s.niche ?? null,
         uniqueContent:  s.uniqueContent ?? true,
         gscSiteUrl:     s.gscSiteUrl ?? null, // Search Console property, if different from `url`
+        sitemapUrl:     s.sitemapUrl ?? null, // sitemap URL, if not "<url>/sitemap_index.xml" (Yoast/RankMath default)
       };
     });
   }
