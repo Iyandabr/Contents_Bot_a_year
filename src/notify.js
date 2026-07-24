@@ -23,6 +23,15 @@ function summarizeSiteResult(r) {
     return `${failed.length > 0 ? "⚠️" : "✅"} ${r.site}: ${r.audited.length} audited, ${failed.length} failed`;
   }
 
+  if (r.checks) {
+    const failedChecks = Object.entries(r.checks)
+      .filter(([, v]) => v && v.ok === false)
+      .map(([key, v]) => `${key} (${v.error ?? v.status ?? "failed"})`);
+    return failedChecks.length > 0
+      ? `⚠️ ${r.site}: MOT FAILED — ${failedChecks.join("; ")}`
+      : `✅ ${r.site}: MOT passed — WordPress, sitemap, SEO pipeline, and topic generation all working`;
+  }
+
   // publish-style single-post result
   const brokenLinks = r.brokenExternalLinks?.length ?? 0;
   const suffix = brokenLinks > 0 ? ` (⚠️ ${brokenLinks} broken source link(s) stripped)` : "";
@@ -35,6 +44,7 @@ function hasFailure(r) {
     return r.refreshed.some((p) => !p.success || (p.brokenExternalLinks?.length ?? 0) > 0);
   }
   if (Array.isArray(r.audited)) return r.audited.some((p) => p.error);
+  if (r.checks) return Object.values(r.checks).some((v) => v && v.ok === false);
   return (r.brokenExternalLinks?.length ?? 0) > 0;
 }
 

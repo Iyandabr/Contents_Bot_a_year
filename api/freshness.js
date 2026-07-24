@@ -32,7 +32,7 @@ module.exports = async (req, res) => {
       })),
     }));
 
-    await notifyRun("Freshness Sweep", results);
+    await notifyRun("Freshness Sweep", results, { onlyOnFailure: false });
 
     console.log(`[/api/freshness] Done in ${elapsed}s`);
     return res.status(200).json({ ok: true, elapsed: `${elapsed}s`, results: summary });

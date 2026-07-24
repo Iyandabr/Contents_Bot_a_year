@@ -6,7 +6,7 @@ module.exports = async (req, res) => {
 
   try {
     const results = await runSeo(siteName);
-    await notifyRun("SEO Audit", results);
+    await notifyRun("SEO Audit", results, { onlyOnFailure: false });
     res.status(200).json({ ok: true, results });
   } catch (err) {
     console.error("[SEO] Fatal:", err);

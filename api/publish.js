@@ -28,7 +28,7 @@ module.exports = async (req, res) => {
       brokenExternalLinks: r.brokenExternalLinks ?? [],
     }));
 
-    await notifyRun("Publish", results);
+    await notifyRun("Publish", results, { onlyOnFailure: false });
 
     console.log(`[/api/publish] Done in ${elapsed}s`);
     return res.status(200).json({ ok: true, elapsed: `${elapsed}s`, results: summary });

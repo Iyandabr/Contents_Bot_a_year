@@ -4,6 +4,7 @@
     "api/publish.js":   { "maxDuration": 120 },
     "api/refresh.js":   { "maxDuration": 120 },
     "api/seo.js":       { "maxDuration": 120 },
-    "api/freshness.js": { "maxDuration": 120 }
+    "api/freshness.js": { "maxDuration": 120 },
+    "api/mot.js":       { "maxDuration": 120 }
   }
 }

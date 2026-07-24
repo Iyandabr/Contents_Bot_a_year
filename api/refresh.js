@@ -32,7 +32,7 @@ module.exports = async (req, res) => {
       })),
     }));
 
-    await notifyRun("Refresh", results);
+    await notifyRun("Refresh", results, { onlyOnFailure: false });
 
     console.log(`[/api/refresh] Done in ${elapsed}s`);
     return res.status(200).json({ ok: true, elapsed: `${elapsed}s`, results: summary });
