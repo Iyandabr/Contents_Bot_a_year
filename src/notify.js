@@ -70,23 +70,25 @@ async function sendSlackAlert(text) {
 }
 
 async function sendTelegramAlert(text) {
-  const token  = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
-  if (!token || !chatId) return;
+  const token   = process.env.TELEGRAM_BOT_TOKEN;
+  const chatIds = (process.env.TELEGRAM_CHAT_ID ?? "").split(",").map((id) => id.trim()).filter(Boolean);
+  if (!token || chatIds.length === 0) return;
 
-  try {
-    // No parse_mode — the "*text*" markers are just literal asterisks here.
-    // Telegram's Markdown mode 400s on unescaped special chars in URLs/titles,
-    // and reliability matters more than bold styling for a failure alert.
-    const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-      method:  "POST",
-      headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify({ chat_id: chatId, text }),
-    });
-    if (!res.ok) console.warn(`[Notify] Telegram API returned ${res.status}`);
-  } catch (err) {
-    console.warn(`[Notify] Telegram alert failed: ${err.message}`);
-  }
+  // No parse_mode — the "*text*" markers are just literal asterisks here.
+  // Telegram's Markdown mode 400s on unescaped special chars in URLs/titles,
+  // and reliability matters more than bold styling for a failure alert.
+  await Promise.all(chatIds.map(async (chatId) => {
+    try {
+      const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ chat_id: chatId, text }),
+      });
+      if (!res.ok) console.warn(`[Notify] Telegram API returned ${res.status} for chat ${chatId}`);
+    } catch (err) {
+      console.warn(`[Notify] Telegram alert failed for chat ${chatId}: ${err.message}`);
+    }
+  }));
 }
 
 /**
