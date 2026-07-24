@@ -23,7 +23,7 @@ async function auditPostSeo(post, siteName) {
   const profile = SITE_PROFILES[siteName] ?? DEFAULT_PROFILE;
   const year = new Date().getFullYear();
 
-  const plainText = post.content
+  const plainText = (post.content?.rendered ?? post.content ?? "")
     .replace(/<[^>]+>/g, " ")
     .replace(/\s+/g, " ")
     .trim()
